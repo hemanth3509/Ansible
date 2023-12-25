@@ -1,5 +1,5 @@
 - name : First playbook
   hosts: web
   tasks:
-   -name :Task1 for pinging the server
+  - name: Task1 for pinging the server
     ansible.builtin.ping:
