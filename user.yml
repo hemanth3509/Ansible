@@ -62,7 +62,7 @@
       state: present
 
   - name: get the users count
-    command:  mongo --host mongodb.daws76s.online --quiet --eval 'db = db.getSiblingDB("users"); db.users.count()'
+    command:  mongo --host mongodb.hs2km.online --quiet --eval 'db = db.getSiblingDB("users"); db.users.count()'
     register: user_count
 
   # - name: print the count
@@ -70,7 +70,7 @@
   #     msg: "product count: {{user_count}}"
 
   - name: load user data
-    command: mongo --host mongodb.daws76s.online < /app/schema/user.js
+    command: mongo --host mongodb.hs2km.online < /app/schema/user.js
     when: user_count.stdout == "0" # keep double quotes
 
   - name: start and enable user
