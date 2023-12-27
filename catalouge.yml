@@ -50,25 +50,25 @@
       daemon_reload: true 
   
   - name: Copy mongodb repo for client 
-    ansible.builtin.copy:
+    copy:
       src: mongodb.repo
       dest: /etc/yum.repos.d/mongodb.repo
 
   - name: Install mongodb client
-    ansible.builtin.package:
+    package:
       name: mongodb-org-shell
       state: present
 
   - name: get the categories count
-    ansible.builtin.shell:  mongo --host mongodb.hs2km.online --quiet --eval 'db = db.getSiblingDB("catalogue"); db.products.count()'
+    shell:  mongo --host mongodb.hs2km.online --quiet --eval 'db = db.getSiblingDB("catalogue"); db.products.count()'
     register: product_count
 
   - name: load catalogue data
-    ansible.builtin.command: mongo --host mongodb.hs2km.online < /app/schema/catalogue.js
+    command: mongo --host mongodb.hs2km.online < /app/schema/catalogue.js
     when: product_count.stdout == "0" 
 
   - name: start and enable catalogue
-    ansible.builtin.service:
+    service:
       name: catalogue
-      state: restarted
+      state: started
       enabled: yes
