@@ -1,6 +1,6 @@
 ---
 - name: Setting up Cart application
-  hosts: Cart
+  hosts: cart
   become: yes
   tasks:
   - name: Disable node js and enable node js
