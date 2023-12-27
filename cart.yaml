@@ -1,0 +1,57 @@
+---
+- name: Setting up Cart application
+  hosts: Cart
+  become: yes
+  tasks:
+  - name: Disable node js and enable node js
+    shell: dnf module disable nodejs -y ; dnf module enable nodejs:18 -y
+
+  - name: Install nodejs
+    dnf:
+      name: nodejs
+      state: present
+  
+  - name: Creating roboshop user
+    user:
+      name: roboshop
+
+  - name: Recursively delete app directory
+    file:
+     path: /app
+     state: absent 
+
+  - name: Creating app directory
+    file:
+      path: /app
+      state: directory
+
+  - name: download cart application
+    get_url:
+      url: https://roboshop-builds.s3.amazonaws.com/cart.zip
+      dest: /tmp
+
+  - name: extract cart application
+    unarchive:
+      src: /tmp/cart.zip
+      dest: /app
+      remote_src: yes
+
+  - name: Install dependencies
+    command: npm install
+    args:
+      chdir: /app
+
+  - name: Copy cart service
+    copy:
+      src: cart.service
+      dest: /etc/systemd/system/cart.service
+
+  - name: deamon realod and start
+    systemd_service:
+      daemon_reload: true
+
+  - name: start and enable cart
+    service:
+      name: cart
+      state: restarted
+      enabled: yes
