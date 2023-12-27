@@ -1,0 +1,25 @@
+- name: install mysql component
+  hosts: mysql
+  become: yes
+  tasks:
+  - name: disable current version of mysql
+    command: dnf module disable mysql -y
+
+  - name: setup mysql5.7 repo
+    copy:
+      src: mysql.repo
+      dest: /etc/yum.repos.d/mysql.repo
+
+  - name: install mysql server
+    package:
+      name: mysql-community-server
+      state: present
+
+  - name: start and enable mysql
+    service:
+      name: mysqld
+      state: started
+      enabled: yes
+
+  - name: setup root password
+    command: mysql_secure_installation --set-root-pass RoboShop@1

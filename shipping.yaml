@@ -1,0 +1,77 @@
+- name: install shipping component
+  hosts: shipping
+  become: yes
+  vars:
+    mysql_password: RoboShop@1
+  tasks:
+  - name: install maven
+    dnf:
+      name: maven
+      state: present
+
+  - name: create roboshop user
+    user:
+      name: roboshop
+
+  - name: Recursively remove app directory
+    file:
+      path: /app
+      state: absent
+
+  - name: create app directory
+    file:
+      path: /app
+      state: directory
+
+  - name: download shipping application
+    get_url:
+      url: https://roboshop-builds.s3.amazonaws.com/shipping.zip
+      dest: /tmp
+
+  - name: extract shipping application
+    unarchive:
+      src: /tmp/shipping.zip
+      dest: /app
+      remote_src: yes
+
+  - name: install dependencies
+    command: mvn clean package
+    args:
+      chdir: /app
+
+  - name: rename jar file
+    command: mv target/shipping-1.0.jar shipping.jar
+    args:
+      chdir: /app
+
+  - name: copy shipping service
+    copy:
+      src: shipping.service
+      dest: /etc/systemd/system/shipping.service
+
+  - name: deamon realod and start
+    systemd_service:
+      daemon_reload: true
+
+  - name: install mysql client
+    dnf:
+      name: mysql
+      state: present
+
+  - name: check cities schema exists or not
+    command:  mysql -h mysql.hs2km.online -uroot -p{{mysql_password}} -sN -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
+    register: schema
+
+  - name: print output
+    debug:
+      msg: "schema output: {{schema}}"
+
+  - name: load cities data
+    shell: "mysql -h mysql.hs2km.online -uroot -p{{mysql_password}}  < /app/schema/shipping.sql"
+    when: schema.stdout != "1"
+
+  - name: start and enable shipping
+    service:
+      name: shipping
+      state: restarted
+      enabled: yes
