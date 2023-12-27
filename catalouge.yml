@@ -48,7 +48,7 @@
 
   - name: Deamon reload
     systemd_service:
-      deamon_reload: true 
+      daemon_reload: true 
   
   - name: Copy mongodb repo for client 
     ansible.builtin.copy:
