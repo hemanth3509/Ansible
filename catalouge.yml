@@ -60,11 +60,11 @@
       state: present
 
   - name: get the categories count
-    ansible.builtin.shell:  mongo --host mongodb.daws76s.online --quiet --eval 'db = db.getSiblingDB("catalogue"); db.products.count()'
+    ansible.builtin.shell:  mongo --host mongodb.hs2km.online --quiet --eval 'db = db.getSiblingDB("catalogue"); db.products.count()'
     register: product_count
 
   - name: load catalogue data
-    ansible.builtin.command: mongo --host mongodb.daws76s.online < /app/schema/catalogue.js
+    ansible.builtin.command: mongo --host mongodb.hs2km.online < /app/schema/catalogue.js
     when: product_count.stdout == "0" 
 
   - name: start and enable catalogue
