@@ -1,0 +1,75 @@
+---
+- name: Setting up Catalogue
+  hosts: catalogue
+  become: yes
+  tasks:
+  - name: Disable old node js and enable nodejs
+    shell: dnf module disable nodejs -y ; dnf module enable nodejs:18 -y
+
+  - name: Installing nodejs
+    package:
+      name: nodejs
+      state: present
+
+  - name: Creating roboshop user 
+    user:
+      name: roboshop
+
+  - name: Recursively remove app directory
+    file:
+      path: /app 
+      state: absent
+
+  - name: Creating app directory
+    file:
+      path: /app
+      state: directory
+
+  - name: Download catalogue application
+    get_url:
+      url: https://roboshop-builds.s3.amazonaws.com/catalogue.zip
+      dest: /tmp
+
+  - name: Unzipping the catalogue zip file
+    unarchive:
+      src: /tmp/catalogue.zip
+      dest: /app
+      remote_src: yes
+
+  - name: Installing Dependencies 
+    shell: npm install 
+    args: 
+    chdir: /app 
+
+  - name: Copying catalogue service file 
+    copy:
+      src: catalogue.service 
+      dest: /etc/systemd/system/catalouge.service
+
+  - name: Deamon reload
+    systemd_service:
+      deamon_reload: true 
+  
+  - name: Copy mongodb repo for client 
+    ansible.builtin.copy:
+      src: mongodb.repo
+      dest: /etc/yum.repos.d/mongodb.repo
+
+  - name: Install mongodb client
+    ansible.builtin.package:
+      name: mongodb-org-shell
+      state: present
+
+  - name: get the categories count
+    ansible.builtin.command:  mongo --host mongodb.daws76s.online --quiet --eval 'db = db.getSiblingDB("catalogue"); db.products.count()'
+    register: product_count
+
+  - name: load catalogue data
+    ansible.builtin.command: mongo --host mongodb.daws76s.online < /app/schema/catalogue.js
+    when: product_count.stdout == "0" 
+
+  - name: start and enable catalogue
+    ansible.builtin.service:
+      name: catalogue
+      state: restarted
+      enabled: yes
